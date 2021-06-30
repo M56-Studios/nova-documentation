@@ -37,7 +37,7 @@ class NovaDocumentationController
         return response()
             ->json([
                 'home' => $homeContent,
-                'title' => config('novadocumentation.title')
+                'title' => config('novadocumentation.title', 'Documentation')
             ]);
     }
 }

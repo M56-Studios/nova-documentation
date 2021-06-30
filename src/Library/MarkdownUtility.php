@@ -1,8 +1,8 @@
 <?php
 namespace Dniccum\NovaDocumentation\Library;
 
-use cebe\markdown\Markdown;
 use cebe\markdown\GithubMarkdown;
+use cebe\markdown\Markdown;
 use cebe\markdown\MarkdownExtra;
 use Dniccum\NovaDocumentation\Library\Contracts\DocumentationPage;
 use Dniccum\NovaDocumentation\Library\Contracts\PageContent;
@@ -33,7 +33,7 @@ class MarkdownUtility
      */
     public function __construct()
     {
-        $flavor = config('novadocumentation.flavor');
+        $flavor = config('novadocumentation.flavor', 'github');
 
         switch ($flavor) {
             case 'standard':
@@ -50,10 +50,10 @@ class MarkdownUtility
 
         $this->yamlParser = YamlFrontMatter::class;
 
-        if (\File::exists(resource_path(config('novadocumentation.home')))) {
-            $this->home = resource_path(config('novadocumentation.home'));
+        if (\File::exists(resource_path(config('novadocumentation.home', 'documentation/home.md')))) {
+            $this->home = resource_path(config('novadocumentation.home', 'documentation/home.md'));
         } else {
-            $this->home = __DIR__.'/../../resources/'.config('novadocumentation.home');
+            $this->home = __DIR__ . '/../../resources/' . config('novadocumentation.home', 'documentation/home.md');
         }
     }
 
@@ -64,7 +64,7 @@ class MarkdownUtility
      */
     public function parse(string $content)
     {
-        if (config('novadocumentation.parser') === 'yaml') {
+        if (config('novadocumentation.parser', 'yaml') === 'yaml') {
             $content = $this->yamlParser::parse($content);
             return new PageContent($content->body(), $content->matter());
         } else {
@@ -79,31 +79,31 @@ class MarkdownUtility
      */
     public function buildPageRoutes()
     {
-        $pathName = explode('/', config('novadocumentation.home'));
+        $pathName = explode('/', config('novadocumentation.home', 'documentation/home.md'));
         $directory = '';
 
         for ($i = 0; $i < (count($pathName) - 1); $i++) {
-            $directory .= $pathName[$i].'/';
+            $directory .= $pathName[$i] . '/';
         }
 
-        if (!\File::exists(resource_path(config('novadocumentation.home')))) {
-            $baseDirectory = __DIR__.'/../../resources/'.$directory;
-            $files  = $this->getDirContents($baseDirectory);
+        if (!\File::exists(resource_path(config('novadocumentation.home', 'documentation/home.md')))) {
+            $baseDirectory = __DIR__ . '/../../resources/' . $directory;
+            $files = $this->getDirContents($baseDirectory);
         } else {
             $baseDirectory = resource_path($directory);
-            $files  = $this->getDirContents($baseDirectory);
+            $files = $this->getDirContents($baseDirectory);
         }
 
         $files = $this->removeFileSuffix($files);
 
-        $pathsToAdd = collect($files)->map(function($path) use ($directory) {
+        $pathsToAdd = collect($files)->map(function ($path) use ($directory) {
             return $this->addFilesToPath($path, preg_replace('{/$}', '', $directory));
         })->values();
 
         $options = [];
 
         try {
-            for($i = 0; $i < count($pathsToAdd); $i++) {
+            for ($i = 0; $i < count($pathsToAdd); $i++) {
                 $target = $files[$i];
                 $fileToParse = \File::get($target);
 
@@ -113,7 +113,7 @@ class MarkdownUtility
                     $target,
                     $pathsToAdd[$i],
                     $content,
-                    is_int(strpos($files[$i], config('novadocumentation.home')))
+                    is_int(strpos($files[$i], config('novadocumentation.home', 'documentation/home.md')))
                 ));
             }
         } catch (\Exception $e) {
@@ -130,14 +130,15 @@ class MarkdownUtility
      * @param array $results
      * @return array
      */
-    private function getDirContents($dir, &$results = array()){
+    private function getDirContents($dir, &$results = array())
+    {
         $files = scandir($dir);
 
-        foreach($files as $key => $value){
-            $path = realpath($dir.DIRECTORY_SEPARATOR.$value);
-            if(!is_dir($path)) {
+        foreach ($files as $key => $value) {
+            $path = realpath($dir . DIRECTORY_SEPARATOR . $value);
+            if (!is_dir($path)) {
                 $results[] = $path;
-            } else if($value != "." && $value != "..") {
+            } else if ($value != "." && $value != "..") {
                 $this->getDirContents($path, $results);
                 $results[] = $path;
             }
@@ -151,18 +152,19 @@ class MarkdownUtility
      * @param array $fileArray
      * @return array
      */
-    private function removeFileSuffix(array $fileArray) {
-        return collect($fileArray)->filter(function($filePath) {
+    private function removeFileSuffix(array $fileArray)
+    {
+        return collect($fileArray)->filter(function ($filePath) {
             return strpos($filePath, '.markdown') ||
-                strpos($filePath, '.mdown') ||
-                strpos($filePath, '.mkdn') ||
-                strpos($filePath, '.md') ||
-                strpos($filePath, '.mkd') ||
-                strpos($filePath, '.mdwn') ||
-                strpos($filePath, '.mdtxt') ||
-                strpos($filePath, '.text') ||
-                strpos($filePath, '.Rmd') ||
-                strpos($filePath, '.mdtext');
+            strpos($filePath, '.mdown') ||
+            strpos($filePath, '.mkdn') ||
+            strpos($filePath, '.md') ||
+            strpos($filePath, '.mkd') ||
+            strpos($filePath, '.mdwn') ||
+            strpos($filePath, '.mdtxt') ||
+            strpos($filePath, '.text') ||
+            strpos($filePath, '.Rmd') ||
+            strpos($filePath, '.mdtext');
         })->values()->all();
     }
 
@@ -179,14 +181,14 @@ class MarkdownUtility
         $filePath = '';
 
         for ($i = ($index + 1); $i < (count($pathParts) - 1); $i++) {
-            $filePath .= $pathParts[$i].'/';
+            $filePath .= $pathParts[$i] . '/';
         }
 
         $fullFileName = $pathParts[count($pathParts) - 1];
         $fileName = substr($fullFileName, 0, strrpos($fullFileName, "."));
 
         if (!empty($fileName)) {
-            return $filePath.$fileName;
+            return $filePath . $fileName;
         }
     }
 }

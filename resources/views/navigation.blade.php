@@ -24,6 +24,6 @@
 </g>
 </svg>
     <span class="sidebar-label">
-        {{ config('novadocumentation.title') }}
+        {{ config('novadocumentation.title', 'Documentation') }}
     </span>
 </router-link>
